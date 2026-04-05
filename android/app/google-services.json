@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "638675355538",
+    "project_id": "fruits-562fe",
+    "storage_bucket": "fruits-562fe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:638675355538:android:b8e00fa6b901de6805e34b",
+        "android_client_info": {
+          "package_name": "com.example.greengrocer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0lyofs_VDlco_QRbQNBwN4xYMsL7DJdQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
