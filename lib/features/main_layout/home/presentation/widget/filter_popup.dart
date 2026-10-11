@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:greengrocer/core/resources/app_assets/app_assets.dart';
 import 'package:greengrocer/core/resources/app_colors/app_colors.dart';
 import 'package:greengrocer/core/resources/responsive/responsive.dart';
+import 'package:greengrocer/features/main_layout/home/presentation/cubit/vendors_cubit.dart';
 
 class FilterPopup {
   static void show(BuildContext context) {
     bool offers = false;
     bool freeDelivery = false;
+    int selectedRegionId = 0;
     String selectedArea = "All Areas";
 
     final responsive = Responsive(context);
+    final vendorsCubit = context.read<VendorsCubit>();
 
     showDialog(
       context: context,
@@ -48,9 +52,7 @@ class FilterPopup {
                       Text(
                         "Filter by",
                         style: TextStyle(
-                          fontSize: responsive.scaleWidth(
-                            isLandscape ? 15 : 18,
-                          ),
+                          fontSize: responsive.scaleWidth(isLandscape ? 15 : 18),
                           fontWeight: FontWeight.bold,
                           color: AppColors.black,
                         ),
@@ -64,9 +66,7 @@ class FilterPopup {
                           Text(
                             "Delivered To",
                             style: TextStyle(
-                              fontSize: responsive.scaleWidth(
-                                isLandscape ? 10 : 15,
-                              ),
+                              fontSize: responsive.scaleWidth(isLandscape ? 10 : 15),
                               fontWeight: FontWeight.w500,
                               color: AppColors.grey,
                             ),
@@ -74,9 +74,7 @@ class FilterPopup {
                           SizedBox(width: responsive.scaleWidth(5)),
                           SvgPicture.asset(
                             AppAssets.deliveryIcon,
-                            height: responsive.scaleHeight(
-                              isLandscape ? 40 : 18,
-                            ),
+                            height: responsive.scaleHeight(isLandscape ? 40 : 18),
                             color: AppColors.green,
                           ),
                         ],
@@ -87,9 +85,7 @@ class FilterPopup {
 
                       Container(
                         width: double.infinity,
-                        height: isLandscape
-                            ? responsive.scaleHeight(125)
-                            : null,
+                        height: isLandscape ? responsive.scaleHeight(125) : null,
                         padding: EdgeInsets.symmetric(
                           horizontal: responsive.scaleWidth(15),
                         ),
@@ -102,9 +98,7 @@ class FilterPopup {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: selectedArea,
-                            iconSize: responsive.scaleWidth(
-                              isLandscape ? 20 : 30,
-                            ),
+                            iconSize: responsive.scaleWidth(isLandscape ? 20 : 30),
                             items: const [
                               DropdownMenuItem(
                                 value: "All Areas",
@@ -114,9 +108,23 @@ class FilterPopup {
                                 value: "Area 1",
                                 child: Text("Area 1"),
                               ),
+                              DropdownMenuItem(
+                                value: "Area 2",
+                                child: Text("Area 2"),
+                              ),
                             ],
-                            onChanged: (val) =>
-                                setLocalState(() => selectedArea = val!),
+                            onChanged: (val) {
+                              setLocalState(() {
+                                selectedArea = val!;
+                                if (val == "All Areas") {
+                                  selectedRegionId = 0;
+                                } else if (val == "Area 1") {
+                                  selectedRegionId = 1;
+                                } else if (val == "Area 2") {
+                                  selectedRegionId = 2;
+                                }
+                              });
+                            },
                           ),
                         ),
                       ),
@@ -124,6 +132,7 @@ class FilterPopup {
                       SizedBox(
                         height: responsive.scaleHeight(isLandscape ? 10 : 10),
                       ),
+
                       isLandscape
                           ? Row(
                         children: [
@@ -141,8 +150,7 @@ class FilterPopup {
                               "Free Delivery",
                               freeDelivery,
                                   (val) => setLocalState(
-                                    () => freeDelivery = val!,
-                              ),
+                                      () => freeDelivery = val!),
                               responsive,
                               isLandscape,
                             ),
@@ -161,8 +169,8 @@ class FilterPopup {
                           _buildCheckbox(
                             "Free Delivery",
                             freeDelivery,
-                                (val) =>
-                                setLocalState(() => freeDelivery = val!),
+                                (val) => setLocalState(
+                                    () => freeDelivery = val!),
                             responsive,
                             isLandscape,
                           ),
@@ -184,19 +192,21 @@ class FilterPopup {
                               ),
                             ),
                             padding: EdgeInsets.symmetric(
-                              vertical: responsive.scaleHeight(
-                                isLandscape ? 14 : 14,
-                              ),
+                              vertical: responsive.scaleHeight(isLandscape ? 14 : 14),
                             ),
                           ),
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () {
+                            vendorsCubit.getVendors(
+                              regionId: selectedRegionId,
+                              isFreeDelivery: freeDelivery ? 1 : null,
+                            );
+                            Navigator.pop(context);
+                          },
                           child: Text(
                             "Apply Filter",
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: responsive.scaleWidth(
-                                isLandscape ? 11 : 16,
-                              ),
+                              fontSize: responsive.scaleWidth(isLandscape ? 11 : 16),
                             ),
                           ),
                         ),
@@ -208,9 +218,7 @@ class FilterPopup {
                           "Close",
                           style: TextStyle(
                             color: Colors.grey,
-                            fontSize: responsive.scaleWidth(
-                              isLandscape ? 10 : 15,
-                            ),
+                            fontSize: responsive.scaleWidth(isLandscape ? 10 : 15),
                           ),
                         ),
                       ),

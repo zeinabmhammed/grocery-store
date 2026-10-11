@@ -21,7 +21,6 @@ class OtpInput extends StatelessWidget {
 
   Widget _buildOtpBox(BuildContext context, bool first, Responsive responsive, bool isLandscape) {
     return SizedBox(
-      // تصغير الحجم في اللاندسكيب عشان مياخدش مساحة رأسية
       width: responsive.scaleWidth(isLandscape ? 30 : 50),
       height: responsive.scaleHeight(isLandscape ? 180 : 50),
       child: TextField(

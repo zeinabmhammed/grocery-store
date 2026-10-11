@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:greengrocer/core/resources/app_assets/app_assets.dart';
 import 'package:greengrocer/core/resources/app_colors/app_colors.dart';
 import 'package:greengrocer/core/resources/responsive/responsive.dart';
+import 'package:greengrocer/features/main_layout/basket/presentation/cubit/cart_cubit.dart';
 import 'package:greengrocer/features/main_layout/basket/presentation/widget/CustomDropdownField.dart';
 import 'package:greengrocer/features/main_layout/basket/presentation/widget/PaymentMethodTile.dart';
 import 'package:greengrocer/features/main_layout/basket/presentation/widget/address_card.dart';
@@ -22,6 +24,10 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   int _currentStep = 0;
   int _selectedPaymentIndex = 1;
+
+  // متغيرات للاحتفاظ بالبيانات المحددة من الخطوات
+  String _selectedDeliveryTime = "09-15-2021";
+  String _selectedAddress = "Room #1 - Ground Floor, Al Najoum Building, Dubai";
 
   final List<String> _stepsLabels = [
     "Delivery Time",
@@ -103,6 +109,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 if (_currentStep < 2) {
                   setState(() => _currentStep++);
                 } else {
+                  // عند الوصول للخطوة الأخيرة وضغط Place Order
+                  context.read<CartCubit>().placeOrder(
+                    paymentType: _selectedPaymentIndex == 0
+                        ? 'credit_card'
+                        : 'cash_on_delivery',
+                    address: _selectedAddress, // تمرير العنوان الديناميكي
+                    deliveryTime: _selectedDeliveryTime, // تمرير الوقت الديناميكي
+                  );
+
+                  // الانتقال لصفحة النجاح
                   Navigator.pushNamed(context, "/checkoutSuccess");
                 }
               },
@@ -144,8 +160,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 color: index < _currentStep
                     ? const Color(0xFF2D5E42)
                     : Colors.grey[300],
-                margin:
-                EdgeInsets.symmetric(
+                margin: EdgeInsets.symmetric(
                   horizontal: responsive.scaleWidth(isLandscape ? 4 : 7),
                 ).copyWith(
                   bottom: responsive.scaleHeight(isLandscape ? 10 : 20),
@@ -203,7 +218,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   style: TextStyle(fontSize: responsive.scaleWidth(14)),
                 ),
                 SizedBox(height: responsive.scaleHeight(10)),
-                CustomDropdownField(selectedDate: "09-15-2021"),
+                CustomDropdownField(selectedDate: _selectedDeliveryTime),
               ],
             ),
           ),
@@ -226,10 +241,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         SizedBox(height: responsive.scaleHeight(10)),
         _buildAddNewAddress(responsive),
         SizedBox(height: responsive.scaleHeight(15)),
-        const AddressCard(
+        AddressCard(
           title: "Address 1",
           subtitle: "John Doe\n+000-11-1234567",
-          info: "Room #1 - Ground Floor, Al Najoum Building, Dubai",
+          info: _selectedAddress,
           isSelected: true,
         ),
       ],
@@ -263,7 +278,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ],
     );
   }
-
 
   Widget _buildAddNewAddress(Responsive responsive) {
     return Container(

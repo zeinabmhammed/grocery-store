@@ -1,8 +1,15 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:greengrocer/core/di/injection.dart';
 import 'package:greengrocer/core/routes_manager/routes.dart';
 import 'package:greengrocer/core/services/fcm_services.dart';
+import 'package:greengrocer/features/auth/domain/usecases/auth_usecases.dart';
+import 'package:greengrocer/features/main_layout/basket/presentation/cubit/cart_cubit.dart';
+import 'package:greengrocer/features/main_layout/favorite/presentation/cubit/favorite_cubit.dart';
+import 'package:greengrocer/features/main_layout/home/domain/entities/product_entity.dart';
+import 'package:greengrocer/features/main_layout/home/presentation/screen/category_products_screen.dart';
 import 'package:greengrocer/firebase_options.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'features/auth/presentation/screens/forget_password.dart';
@@ -27,15 +34,10 @@ import 'features/onboarding_screen/presentation/screen/on_boarding_screen.dart';
 import 'features/splash_screen/presentation/splash_screen.dart';
 
 
-// @pragma('vm:entry-point')
-// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-//   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-//   await FCMServices.setupFlutterNotifications();
-//   FCMServices.showFlutterNotification(message);
-// }
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await initDependencies();
 
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
   OneSignal.initialize("0f105f5b-2731-404f-8e45-6193551d509b");
@@ -44,16 +46,26 @@ void main() async {
 
   OneSignal.Notifications.addForegroundWillDisplayListener((event) {
     print('Notification received in foreground');
-
     event.notification.display();
   });
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  // FCMServices.printDeviceToken();
-  // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  // await FCMServices.setupFlutterNotifications();
-  runApp(MyApp());
+
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => CartCubit(),
+        ),
+        BlocProvider(
+          create: (context) => FavoriteCubit(
+            addToFavoriteUseCase: sl<AddToFavoriteUseCase>(),
+          ),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -74,11 +86,12 @@ class _MyAppState extends State<MyApp> {
     FirebaseMessaging.onMessage.listen(FCMServices.showFlutterNotification);
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Fruits App',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
       debugShowCheckedModeBanner: false,
       routes: {
         AppRoutes.splashRoute: (context) => const SplashScreen(),
@@ -88,11 +101,11 @@ class _MyAppState extends State<MyApp> {
         AppRoutes.signUpRoute: (context) => const SignUpScreen(),
         AppRoutes.forgetPasswordRoute: (context) => const ForgetPassword(),
         AppRoutes.otpRoute: (context) => const OtpScreen(),
+        AppRoutes.sellersDetailsRoute: (context) => const SellersDetails(),
         AppRoutes.mainLayoutRoute: (context) => const MainLayout(),
         AppRoutes.profileRoute: (context) => const UpdateProfileScreen(),
         AppRoutes.supportRoute: (context) => const SupportScreen(),
         AppRoutes.termsRoute: (context) => const TermsScreen(),
-        AppRoutes.sellersDetailsRoute: (context) => const SellersDetails(),
         AppRoutes.ordersRoute: (context) => const OrdersScreen(),
         AppRoutes.favoriteRoute: (context) => const FavoriteScreen(),
         AppRoutes.basketRoute: (context) => const BasketScreen(),
@@ -101,9 +114,18 @@ class _MyAppState extends State<MyApp> {
         AppRoutes.checkoutSuccessRoute: (context) => const CheckoutSuccess(),
         AppRoutes.checkoutFailedRoute: (context) => const CheckoutFailed(),
         AppRoutes.orderTrackingRoute: (context) => const OrderTrackingScreen(),
+        AppRoutes.categoryProductsRoute: (context) {
+          final args =
+          ModalRoute.of(context)!.settings.arguments
+          as Map<String, dynamic>;
+          return CategoryProductsScreen(
+            categoryId: args['categoryId'] as int,
+            categoryName: args['categoryName'] as String,
+            products: args['products'] as List<ProductEntity>,
+          );
+        },
       },
-
-      initialRoute: AppRoutes.splashRoute,
+      initialRoute:  AppRoutes.onBoardingRoute,
     );
   }
 }

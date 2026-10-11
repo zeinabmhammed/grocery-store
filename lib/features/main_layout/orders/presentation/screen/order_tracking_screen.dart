@@ -91,7 +91,7 @@ class OrderTrackingScreen extends StatelessWidget {
   void _showCancelDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => const CancelOrderPopup(),
+      builder: (context) => const CancelOrderPopup(orderId: 1234567890 ),
     );
   }
 }

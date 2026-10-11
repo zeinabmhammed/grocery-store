@@ -3,7 +3,9 @@ import 'package:greengrocer/core/resources/responsive/responsive.dart';
 import '../app_colors/app_colors.dart';
 
 class CustomPhoneField extends StatefulWidget {
-  const CustomPhoneField({super.key});
+  final TextEditingController? controller;
+
+  const CustomPhoneField({super.key, this.controller});
 
   @override
   State<CustomPhoneField> createState() => _CustomPhoneFieldState();
@@ -24,7 +26,8 @@ class _CustomPhoneFieldState extends State<CustomPhoneField> {
   @override
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,73 +41,89 @@ class _CustomPhoneFieldState extends State<CustomPhoneField> {
           ),
         ),
         SizedBox(height: responsive.scaleHeight(isLandscape ? 25 : 10)),
-        Container(
-          height: responsive.scaleHeight(isLandscape ? 160: 51),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(responsive.scaleWidth(25)),
-            border: Border.all(color: Colors.grey.shade300),
+        TextFormField(
+          controller: widget.controller,
+          keyboardType: TextInputType.phone,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter your phone number';
+            }
+            if (value.length < 8) {
+              return 'Please enter a valid phone number';
+            }
+            return null;
+          },
+          style: TextStyle(
+            fontSize: responsive.scaleWidth(isLandscape ? 12 : 14),
           ),
-          child: Row(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: responsive.scaleWidth(isLandscape ? 15 : 15),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: selectedCountry,
-                    icon: Icon(
-                      Icons.keyboard_arrow_down,
-                      size: responsive.scaleWidth(isLandscape ? 18 : 25),
-                    ),
-                    elevation: 16,
-                    items: countries.map((country) {
-                      return DropdownMenuItem<String>(
-                        value: country['code'],
-                        child: Text(
-                          country['code']!,
-                          style: TextStyle(
-                            fontSize: responsive.scaleWidth(isLandscape ? 12 : 14),
-                            fontWeight: FontWeight.w500,
-                          ),
+          decoration: InputDecoration(
+            hintText: "Mobile Number",
+            hintStyle: TextStyle(
+              fontSize: responsive.scaleWidth(isLandscape ? 12 : 14),
+              color: AppColors.black,
+            ),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: responsive.scaleWidth(15),
+              vertical: responsive.scaleHeight(isLandscape ? 10 : 15),
+            ),
+            prefixIcon: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: responsive.scaleWidth(isLandscape ? 15 : 15),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: selectedCountry,
+                  icon: Icon(
+                    Icons.keyboard_arrow_down,
+                    size: responsive.scaleWidth(isLandscape ? 18 : 25),
+                  ),
+                  elevation: 16,
+                  items: countries.map((country) {
+                    return DropdownMenuItem<String>(
+                      value: country['code'],
+                      child: Text(
+                        country['code']!,
+                        style: TextStyle(
+                          fontSize:
+                          responsive.scaleWidth(isLandscape ? 12 : 14),
+                          fontWeight: FontWeight.w500,
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedCountry = newValue!;
-                      });
-                    },
-                  ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      selectedCountry = newValue!;
+                    });
+                  },
                 ),
               ),
-              Container(
-                height: responsive.scaleHeight(isLandscape ? 80 : 30),
-                width: responsive.scaleWidth(2),
-                color: Colors.grey.shade300,
-              ),
-              Expanded(
-                child: TextField(
-                  keyboardType: TextInputType.phone,
-                  style: TextStyle(
-                    fontSize: responsive.scaleWidth(isLandscape ? 12 : 14),
-                  ),
-                  decoration: InputDecoration(
-                    hintText: "Mobile Number",
-                    hintStyle: TextStyle(
-                      fontSize: responsive.scaleWidth(isLandscape ? 12 : 14),
-                      color: AppColors.black,
-                    ),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: responsive.scaleWidth(15),
-                      vertical: responsive.scaleHeight(isLandscape ? 10 : 0),
-                    ),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-            ],
+            ),
+            border: OutlineInputBorder(
+              borderRadius:
+              BorderRadius.circular(responsive.scaleWidth(25)),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius:
+              BorderRadius.circular(responsive.scaleWidth(25)),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius:
+              BorderRadius.circular(responsive.scaleWidth(25)),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius:
+              BorderRadius.circular(responsive.scaleWidth(25)),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius:
+              BorderRadius.circular(responsive.scaleWidth(25)),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
           ),
         ),
       ],

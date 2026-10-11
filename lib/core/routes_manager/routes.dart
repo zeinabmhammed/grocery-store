@@ -20,4 +20,6 @@ class AppRoutes{
   static const String checkoutSuccessRoute = "/checkoutSuccess";
   static const String checkoutFailedRoute = "/checkoutFailed";
   static const String orderTrackingRoute = "/orderTracking";
+  static const String categoryProductsRoute = "/categoryProducts";
+
 }

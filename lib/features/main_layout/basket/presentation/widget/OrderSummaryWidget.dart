@@ -1,6 +1,9 @@
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:greengrocer/core/resources/responsive/responsive.dart';
+import 'package:greengrocer/features/main_layout/basket/presentation/cubit/cart_cubit.dart';
+import 'package:greengrocer/features/main_layout/basket/presentation/cubit/cart_state.dart';
 
 class OrderSummaryWidget extends StatelessWidget {
   const OrderSummaryWidget({super.key});
@@ -11,90 +14,111 @@ class OrderSummaryWidget extends StatelessWidget {
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
 
-    return Container(
-      padding: EdgeInsets.all(responsive.scaleWidth(isLandscape ? 16 : 20)),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: isLandscape
-            ? BorderRadius.zero
-            : BorderRadius.vertical(
-          top: Radius.circular(responsive.scaleWidth(25)),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: responsive.scaleWidth(10),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: responsive.scaleHeight(10)),
-            child: DottedLine(
-              dashColor: Colors.grey.shade300,
-              lineThickness: responsive.scaleWidth(1),
+    return BlocBuilder<CartCubit, CartState>(
+      builder: (context, state) {
+        // استخراج القيم الديناميكية بناءً على حالة الـ Cubit
+        final subtotal = state is CartUpdated ? state.subtotal : 0.0;
+        final shipping = state is CartUpdated ? state.shippingCharges : 0.0;
+        final total = state is CartUpdated ? state.total : 0.0;
+        final itemCount = state is CartUpdated ? state.itemCount : 0;
+
+        return Container(
+          padding: EdgeInsets.all(responsive.scaleWidth(isLandscape ? 16 : 20)),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: isLandscape
+                ? BorderRadius.zero
+                : BorderRadius.vertical(
+              top: Radius.circular(responsive.scaleWidth(25)),
             ),
-          ),
-
-          _buildPriceRow("Subtotal", "36.00 KD", responsive, isLandscape),
-          _buildPriceRow(
-            "Shipping Charges",
-            "1.50 KD",
-            responsive,
-            isLandscape,
-          ),
-
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: responsive.scaleHeight(10)),
-            child: Divider(thickness: 1, color: Colors.grey.shade100),
-          ),
-
-          _buildPriceRow(
-            "Bag Total",
-            "37.50 KD",
-            responsive,
-            isLandscape,
-            isTotal: true,
-          ),
-
-          SizedBox(height: responsive.scaleHeight(isLandscape ? 15 : 20)),
-
-          isLandscape
-              ? Column(
-            children: [
-              _buildCartInfoRow(
-                "4 items in cart",
-                "37.50 KD",
-                isLandscape,
-                responsive,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: responsive.scaleWidth(10),
               ),
-              SizedBox(height: responsive.scaleHeight(15)),
-              _buildCheckoutButton(context, responsive, isLandscape),
             ],
-          )
-              : Row(
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildCartInfoColumn(
-                "4 items in cart",
-                "37.50 KD",
-                responsive,
-                isLandscape,
-              ),
-              SizedBox(width: responsive.scaleWidth(20)),
-              Expanded(
-                child: _buildCheckoutButton(
-                  context,
-                  responsive,
-                  isLandscape,
+              Padding(
+                padding: EdgeInsets.symmetric(
+                    vertical: responsive.scaleHeight(10)),
+                child: DottedLine(
+                  dashColor: Colors.grey.shade300,
+                  lineThickness: responsive.scaleWidth(1),
                 ),
               ),
+
+              // استخدام القيم الديناميكية هنا
+              _buildPriceRow(
+                "Subtotal",
+                "${subtotal.toStringAsFixed(2)} KD",
+                responsive,
+                isLandscape,
+              ),
+              _buildPriceRow(
+                "Shipping Charges",
+                "${shipping.toStringAsFixed(2)} KD",
+                responsive,
+                isLandscape,
+              ),
+
+              Padding(
+                padding: EdgeInsets.symmetric(
+                    vertical: responsive.scaleHeight(10)),
+                child: Divider(thickness: 1, color: Colors.grey.shade100),
+              ),
+
+              // استخدام قيمة الإجمالي الديناميكية هنا
+              _buildPriceRow(
+                "Bag Total",
+                "${total.toStringAsFixed(2)} KD",
+                responsive,
+                isLandscape,
+                isTotal: true,
+              ),
+
+              SizedBox(height: responsive.scaleHeight(isLandscape ? 15 : 20)),
+
+              isLandscape
+                  ? Column(
+                children: [
+                  // استخدام عدد العناصر الديناميكي والإجمالي هنا في اللاندسكيب
+                  _buildCartInfoRow(
+                    "$itemCount items in cart",
+                    "${total.toStringAsFixed(2)} KD",
+                    isLandscape,
+                    responsive,
+                  ),
+                  SizedBox(height: responsive.scaleHeight(15)),
+                  _buildCheckoutButton(context, responsive, isLandscape),
+                ],
+              )
+                  : Row(
+                children: [
+                  // استخدام عدد العناصر الديناميكي والإجمالي هنا في البورتريت
+                  _buildCartInfoColumn(
+                    "$itemCount items in cart",
+                    "${total.toStringAsFixed(2)} KD",
+                    responsive,
+                    isLandscape,
+                  ),
+                  SizedBox(width: responsive.scaleWidth(20)),
+                  Expanded(
+                    child: _buildCheckoutButton(
+                      context,
+                      responsive,
+                      isLandscape,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

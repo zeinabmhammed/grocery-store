@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:greengrocer/core/resources/app_assets/app_assets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:greengrocer/core/di/injection.dart';
 import 'package:greengrocer/core/resources/app_colors/app_colors.dart';
 import 'package:greengrocer/core/resources/responsive/responsive.dart';
+import 'package:greengrocer/features/main_layout/home/domain/entities/vendor_entity.dart';
+import 'package:greengrocer/features/main_layout/home/presentation/cubit/vendors_cubit.dart';
+import 'package:greengrocer/features/main_layout/home/presentation/cubit/vendors_state.dart';
+import 'package:greengrocer/features/main_layout/home/domain/usecases/get_vendors_usecase.dart';
 
 class SellersSection extends StatelessWidget {
   const SellersSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const _SellersSectionContent();
+  }
+}
+
+class _SellersSectionContent extends StatelessWidget {
+  const _SellersSectionContent();
 
   @override
   Widget build(BuildContext context) {
@@ -17,10 +31,22 @@ class SellersSection extends StatelessWidget {
       children: [
         _buildHeader(responsive),
         SizedBox(height: responsive.scaleHeight(12)),
-
-        isLandscape
-            ? _buildLandscapeGrid(responsive)
-            : _buildPortraitList(responsive),
+        BlocBuilder<VendorsCubit, VendorsState>(
+          builder: (context, state) {
+            if (state is VendorsLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state is VendorsError) {
+              return Center(child: Text(state.message));
+            }
+            if (state is VendorsSuccess) {
+              return isLandscape
+                  ? _buildLandscapeGrid(state.vendors, responsive)
+                  : _buildPortraitList(state.vendors, responsive);
+            }
+            return const SizedBox();
+          },
+        ),
       ],
     );
   }
@@ -51,24 +77,27 @@ class SellersSection extends StatelessWidget {
     );
   }
 
-  Widget _buildPortraitList(Responsive responsive) {
+  Widget _buildPortraitList(List<VendorEntity> vendors, Responsive responsive) {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: 3,
+      itemCount: vendors.length,
       separatorBuilder: (_, __) => SizedBox(height: responsive.scaleHeight(12)),
       itemBuilder: (context, index) =>
-          _buildSellerItem(index, responsive, false, context),
+          _buildSellerItem(vendors[index], responsive, false, context),
     );
   }
 
-  Widget _buildLandscapeGrid(Responsive responsive) {
+  Widget _buildLandscapeGrid(
+    List<VendorEntity> vendors,
+    Responsive responsive,
+  ) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: responsive.scaleWidth(16)),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: 3,
+        itemCount: vendors.length,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: responsive.scaleWidth(10),
@@ -76,50 +105,23 @@ class SellersSection extends StatelessWidget {
           mainAxisExtent: responsive.scaleHeight(300),
         ),
         itemBuilder: (context, index) =>
-            _buildSellerItem(index, responsive, true,context),
+            _buildSellerItem(vendors[index], responsive, true, context),
       ),
     );
   }
 
   Widget _buildSellerItem(
-      int index,
-      Responsive responsive,
-      bool isLandscape,
-      BuildContext context,
-      ) {
+    VendorEntity vendor,
+    Responsive responsive,
+    bool isLandscape,
+    BuildContext context,
+  ) {
     return GestureDetector(
-      onTap: () {},
-      child: _buildSellerCard(
-        context: context,
-        logo: AppAssets.sellerLogo,
-        name: "Seller name",
-        delivery: index == 0 ? "0.5 KD" : "Free Delivery",
-        status: index % 2 == 0 ? "Open" : "Close",
-        category: index == 0 ? "Beverages" : "Pizza",
-        distance: "2.5 KM",
-        rating: "4.5",
-        responsive: responsive,
-        isLandscape: isLandscape,
+      onTap: () => Navigator.pushNamed(
+        context,
+        "/sellersDetails",
+        arguments: vendor,
       ),
-    );
-  }
-
-  Widget _buildSellerCard({
-    required String logo,
-    required String name,
-    required String delivery,
-    required String status,
-    required String category,
-    required String distance,
-    required String rating,
-    required Responsive responsive,
-    required bool isLandscape,
-    required BuildContext context,
-  }) {
-    return GestureDetector(
-      onTap: (){
-        Navigator.pushNamed(context, "/sellersDetails");
-      },
       child: Container(
         margin: isLandscape
             ? EdgeInsets.zero
@@ -141,10 +143,19 @@ class SellersSection extends StatelessWidget {
             Container(
               width: responsive.scaleWidth(isLandscape ? 40 : 80),
               height: responsive.scaleWidth(isLandscape ? 50 : 80),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset(logo, fit: BoxFit.cover),
+                child: vendor.logoUrl != null
+                    ? Image.network(
+                        vendor.logoUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.store, size: 40),
+                      )
+                    : const Icon(Icons.store, size: 40),
               ),
             ),
             SizedBox(width: responsive.scaleWidth(7)),
@@ -158,7 +169,7 @@ class SellersSection extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          name,
+                          vendor.name,
                           style: TextStyle(
                             fontSize: responsive.scaleWidth(
                               isLandscape ? 10 : 15,
@@ -169,9 +180,11 @@ class SellersSection extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        rating,
+                        vendor.rating?.toString() ?? '',
                         style: TextStyle(
-                          fontSize: responsive.scaleWidth(isLandscape ? 10 : 13),
+                          fontSize: responsive.scaleWidth(
+                            isLandscape ? 10 : 13,
+                          ),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -179,7 +192,7 @@ class SellersSection extends StatelessWidget {
                   ),
                   SizedBox(height: responsive.scaleHeight(4)),
                   Text(
-                    delivery,
+                    vendor.isFreeDelivery ? 'Free Delivery' : 'Paid Delivery',
                     style: TextStyle(
                       fontSize: responsive.scaleWidth(isLandscape ? 10 : 13),
                       color: Colors.grey,
@@ -191,15 +204,17 @@ class SellersSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "$status · $category",
+                        vendor.status ?? '',
                         style: TextStyle(
                           fontSize: responsive.scaleWidth(isLandscape ? 8 : 12),
-                          color: status == "Open" ? AppColors.green : Colors.red,
+                          color: vendor.status == 'Open'
+                              ? AppColors.green
+                              : Colors.red,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        distance,
+                        vendor.distance ?? '',
                         style: TextStyle(
                           fontSize: responsive.scaleWidth(isLandscape ? 8 : 11),
                           color: AppColors.green,

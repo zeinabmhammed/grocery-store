@@ -46,6 +46,12 @@ dependencies:
   flutter_local_notifications: 20.1.0
   firebase_analytics: 12.1.2
   onesignal_flutter: 5.4.1
+  equatable: ^2.0.8
+  dio: ^5.9.2
+  pretty_dio_logger: ^1.4.0
+  dartz: ^0.10.1
+  get_it: ^9.2.1
+  flutter_bloc: ^9.1.1
 
 dev_dependencies:
   flutter_test:
